@@ -1,46 +1,76 @@
 import * as THREE from "three";
 import WebGL from "three/addons/capabilities/WebGL.js";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 
-const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(
-  45,
-  window.innerWidth / window.innerHeight,
-  1,
-  500
-);
-camera.position.set(0, 0, 100);
-camera.lookAt(0, 0, 0);
+let scene, camera, renderer, model;
 
-const renderer = new THREE.WebGLRenderer();
-renderer.setSize(window.innerWidth, window.innerHeight);
+function init() {
+  // Create the scene
+  scene = new THREE.Scene();
 
-document.body.appendChild(renderer.domElement);
+  // Create a camera, which determines what we'll see when we render the scene
+  camera = new THREE.PerspectiveCamera(
+    75,
+    window.innerWidth / window.innerHeight,
+    0.1,
+    1000
+  );
+  camera.position.set(0, 1, 3);
 
-const cubeGeometry = new THREE.BoxGeometry(5, 5, 5);
-const cubeMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
-const lineMaterial = new THREE.LineBasicMaterial({ color: 0x0000ff });
-const points = [];
-points.push(new THREE.Vector3(-10, 0, 0));
-points.push(new THREE.Vector3(0, 10, 0));
-points.push(new THREE.Vector3(10, 0, 0));
+  // Create a renderer and add it to our document
+  renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  document.body.appendChild(renderer.domElement);
 
-const lineGeometry = new THREE.BufferGeometry().setFromPoints(points);
-const line = new THREE.Line(lineGeometry, lineMaterial);
+  // Add an ambient light
+  const ambientLight = new THREE.AmbientLight(0x404040, 2); // soft white light
+  scene.add(ambientLight);
+
+  // Add a directional light
+  const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+  directionalLight.position.set(5, 5, 5);
+  scene.add(directionalLight);
+
+  // Add orbit controls to allow for zooming, panning, and rotating the camera
+  const controls = new OrbitControls(camera, renderer.domElement);
+
+  // Load the GLTF model
+  const loader = new GLTFLoader();
+  loader.load(
+    "public/lowpoly_cd.glb",
+    function (gltf) {
+      model = gltf.scene;
+      scene.add(model);
+    },
+    undefined,
+    function (error) {
+      console.error(error);
+    }
+  );
+
+  // Handle window resize
+  window.addEventListener("resize", onWindowResize, false);
+}
+
+function onWindowResize() {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+}
 
 function animate() {
-  scene.add(cube);
-  scene.add(line);
+  requestAnimationFrame(animate);
 
-  //   camera.position.z = 5;
-  cube.rotation.x += 0.01;
-  cube.rotation.y += 0.01;
+  // Rotate the model
+  if (model) {
+    model.rotation.y += 0.01; // Adjust the rotation speed as needed
+  }
+
+  // Render the scene from the perspective of the camera
   renderer.render(scene, camera);
 }
 
-if (WebGL.isWebGLAvailable()) {
-  renderer.setAnimationLoop(animate);
-} else {
-  const warning = WebGL.getWebGLErrorMessage();
-  document.getElementById("container").appendChild(warning);
-}
+// Initialize the scene and start the animation
+init();
+animate();

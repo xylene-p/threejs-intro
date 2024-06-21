@@ -1,0 +1,13 @@
+#info {
+	position: absolute;
+	top: 20px;
+	color: white;
+	font-family: Arial, sans-serif;
+	font-size: 24px;
+	text-align: center;
+	pointer-events: none;
+}
+
+body {
+	margin: 0;
+}
