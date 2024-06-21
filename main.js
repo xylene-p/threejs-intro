@@ -2,7 +2,37 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 
-let scene, camera, renderer, model, pivot;
+let scene, camera, renderer, model, pivot, loader;
+let models = [];
+
+function loadModel(url) {
+  loader.load(
+    url,
+    function (gltf) {
+      model = gltf.scene;
+      model.position.set(
+        Math.random() * 20 - 10,
+        Math.random() * 20,
+        Math.random() * 20 - 10
+      );
+      // Center the model
+      model.traverse(function (child) {
+        if (child.isMesh) {
+          child.geometry.computeBoundingBox();
+          const boundingBox = child.geometry.boundingBox;
+          const center = boundingBox.getCenter(new THREE.Vector3());
+          child.geometry.translate(-center.x, -center.y, -center.z);
+        }
+      });
+      pivot.add(model);
+      models.push(pivot);
+    },
+    undefined,
+    function (error) {
+      console.error(error);
+    }
+  );
+}
 
 function init() {
   // Create the scene
@@ -32,33 +62,17 @@ function init() {
   scene.add(directionalLight);
 
   // Add orbit controls to allow for zooming, panning, and rotating the camera
-  const controls = new OrbitControls(camera, renderer.domElement);
+  //   const controls = new OrbitControls(camera, renderer.domElement);
 
   pivot = new THREE.Object3D();
   scene.add(pivot);
 
   // Load the GLTF model
-  const loader = new GLTFLoader();
-  loader.load(
-    "public/lowpoly_cd.glb",
-    function (gltf) {
-      model = gltf.scene;
-      // Center the model
-      model.traverse(function (child) {
-        if (child.isMesh) {
-          child.geometry.computeBoundingBox();
-          const boundingBox = child.geometry.boundingBox;
-          const center = boundingBox.getCenter(new THREE.Vector3());
-          child.geometry.translate(-center.x, -center.y, -center.z);
-        }
-      });
-      pivot.add(model);
-    },
-    undefined,
-    function (error) {
-      console.error(error);
-    }
-  );
+  loader = new GLTFLoader();
+
+  for (let i = 0; i < 10; i++) {
+    loadModel("public/lowpoly_cd.glb");
+  }
 
   // Handle window resize
   window.addEventListener("resize", onWindowResize, false);
@@ -73,9 +87,16 @@ function onWindowResize() {
 function animate() {
   requestAnimationFrame(animate);
 
-  // Rotate the model
-  if (model) {
-    model.rotation.y += 0.01; // Adjust the rotation speed as needed
+  if (models) {
+    models.forEach((model) => {
+      model.rotation.y += 0.001;
+      model.position.y -= 0.1;
+      if (model.position.y < -100) {
+        model.position.y = 20;
+        model.position.x = Math.random() * 20 - 10;
+        model.position.z = Math.random() * 20 - 10;
+      }
+    });
   }
 
   // Render the scene from the perspective of the camera
