@@ -1,9 +1,8 @@
 import * as THREE from "three";
-import WebGL from "three/addons/capabilities/WebGL.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 
-let scene, camera, renderer, model;
+let scene, camera, renderer, model, pivot;
 
 function init() {
   // Create the scene
@@ -16,7 +15,7 @@ function init() {
     0.1,
     1000
   );
-  camera.position.set(0, 1, 3);
+  camera.position.z = 100;
 
   // Create a renderer and add it to our document
   renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -35,13 +34,25 @@ function init() {
   // Add orbit controls to allow for zooming, panning, and rotating the camera
   const controls = new OrbitControls(camera, renderer.domElement);
 
+  pivot = new THREE.Object3D();
+  scene.add(pivot);
+
   // Load the GLTF model
   const loader = new GLTFLoader();
   loader.load(
     "public/lowpoly_cd.glb",
     function (gltf) {
       model = gltf.scene;
-      scene.add(model);
+      // Center the model
+      model.traverse(function (child) {
+        if (child.isMesh) {
+          child.geometry.computeBoundingBox();
+          const boundingBox = child.geometry.boundingBox;
+          const center = boundingBox.getCenter(new THREE.Vector3());
+          child.geometry.translate(-center.x, -center.y, -center.z);
+        }
+      });
+      pivot.add(model);
     },
     undefined,
     function (error) {
