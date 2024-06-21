@@ -2,36 +2,20 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 
-let scene, camera, renderer, model, pivot, loader;
-let models = [];
+let scene,
+  camera,
+  renderer,
+  models = [];
 
-function loadModel(url) {
-  loader.load(
-    url,
-    function (gltf) {
-      model = gltf.scene;
-      model.position.set(
-        Math.random() * 20 - 10,
-        Math.random() * 20,
-        Math.random() * 20 - 10
-      );
-      // Center the model
-      model.traverse(function (child) {
-        if (child.isMesh) {
-          child.geometry.computeBoundingBox();
-          const boundingBox = child.geometry.boundingBox;
-          const center = boundingBox.getCenter(new THREE.Vector3());
-          child.geometry.translate(-center.x, -center.y, -center.z);
-        }
-      });
-      pivot.add(model);
-      models.push(pivot);
-    },
-    undefined,
-    function (error) {
-      console.error(error);
-    }
-  );
+function generateRandomPosition() {
+  let max = 20;
+  let min = 0;
+  let x = Math.floor(Math.random() * (max - min + 1)) + min;
+  let y = Math.floor(Math.random() * (max - min + 1)) + min;
+  let z = Math.floor(Math.random() * (max - min + 1)) + min;
+  console.log(x, y, z);
+
+  return new THREE.Vector3(x, y, z);
 }
 
 function init() {
@@ -45,7 +29,7 @@ function init() {
     0.1,
     1000
   );
-  camera.position.z = 100;
+  camera.position.set(0, 1, 3);
 
   // Create a renderer and add it to our document
   renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -62,17 +46,59 @@ function init() {
   scene.add(directionalLight);
 
   // Add orbit controls to allow for zooming, panning, and rotating the camera
-  //   const controls = new OrbitControls(camera, renderer.domElement);
+  const controls = new OrbitControls(camera, renderer.domElement);
 
-  pivot = new THREE.Object3D();
-  scene.add(pivot);
+  let cdObjectCount = 3;
+  let modelsToLoad = [];
 
-  // Load the GLTF model
-  loader = new GLTFLoader();
-
-  for (let i = 0; i < 10; i++) {
-    loadModel("public/lowpoly_cd.glb");
+  for (let i = 0; i < cdObjectCount; i++) {
+    modelsToLoad.push({
+      path: "public/lowpoly_cd.glb",
+      position: generateRandomPosition(),
+    });
   }
+
+  // Load all models
+  const loader = new GLTFLoader();
+  let loadedModelsCount = 0;
+
+  modelsToLoad.forEach((modelInfo) => {
+    loader.load(
+      modelInfo.path,
+      function (gltf) {
+        const model = gltf.scene;
+        // Center the model
+        model.traverse(function (child) {
+          if (child.isMesh) {
+            child.geometry.computeBoundingBox();
+            const boundingBox = child.geometry.boundingBox;
+            const center = boundingBox.getCenter(new THREE.Vector3());
+            child.geometry.translate(-center.x, -center.y, -center.z);
+          }
+        });
+
+        // Create a pivot object for each model
+        const pivot = new THREE.Object3D();
+        pivot.position.copy(modelInfo.position);
+        pivot.add(model);
+        scene.add(pivot);
+
+        // Store the model and pivot for animation
+        models.push({ model: model, pivot: pivot });
+
+        loadedModelsCount++;
+
+        // Start animation once all models are loaded
+        if (loadedModelsCount === modelsToLoad.length) {
+          animate();
+        }
+      },
+      undefined,
+      function (error) {
+        console.error(error);
+      }
+    );
+  });
 
   // Handle window resize
   window.addEventListener("resize", onWindowResize, false);
@@ -87,22 +113,18 @@ function onWindowResize() {
 function animate() {
   requestAnimationFrame(animate);
 
-  if (models) {
-    models.forEach((model) => {
-      model.rotation.y += 0.001;
-      model.position.y -= 0.1;
-      if (model.position.y < -100) {
-        model.position.y = 20;
-        model.position.x = Math.random() * 20 - 10;
-        model.position.z = Math.random() * 20 - 10;
-      }
-    });
-  }
+  // Rotate each model around its pivot
+  models.forEach(({ pivot }) => {
+    const randomRotationDirection = Math.random() < 0.5 ? -1 : 1;
+    pivot.rotationDirection = randomRotationDirection;
+    const randomRotationSpeed = Math.random() < 0.5 ? 0.01 : 0.05;
+    pivot.rotation.y += randomRotationSpeed;
+    pivot.x -= 1;
+  });
 
   // Render the scene from the perspective of the camera
   renderer.render(scene, camera);
 }
 
-// Initialize the scene and start the animation
+// Initialize the scene and start loading models
 init();
-animate();
