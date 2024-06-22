@@ -1,132 +1,112 @@
 import * as THREE from "three";
-import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+
+import { AsciiEffect } from "three/addons/effects/AsciiEffect.js";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 
-let scene,
-  camera,
-  renderer,
-  models = [];
+let camera, scene, renderer, video, effect;
 
-function generateRandomPosition() {
-  let max = 20;
-  let min = 0;
-  let x = Math.floor(Math.random() * (max - min + 1)) + min;
-  let y = Math.floor(Math.random() * (max - min + 1)) + min;
-  let z = Math.floor(Math.random() * (max - min + 1)) + min;
-  console.log(x, y, z);
+let sphere;
 
-  return new THREE.Vector3(x, y, z);
-}
+init();
 
-function loadModels(loader, modelsToLoad) {
-  let loadedModelsCount = 0;
-  modelsToLoad.forEach((modelInfo) => {
-    loader.load(
-      modelInfo.path,
-      function (gltf) {
-        const model = gltf.scene;
-        // Center the model
-        model.traverse(function (child) {
-          if (child.isMesh) {
-            child.geometry.computeBoundingBox();
-            const boundingBox = child.geometry.boundingBox;
-            const center = boundingBox.getCenter(new THREE.Vector3());
-            child.geometry.translate(-center.x, -center.y, -center.z);
-          }
-        });
-
-        // Create a pivot object for each model
-        const pivot = new THREE.Object3D();
-        pivot.position.copy(modelInfo.position);
-        pivot.add(model);
-        scene.add(pivot);
-
-        // Store the model and pivot for animation
-        models.push({ model: model, pivot: pivot });
-
-        loadedModelsCount++;
-
-        // Start animation once all models are loaded
-        if (loadedModelsCount === modelsToLoad.length) {
-          animate();
-        }
-      },
-      undefined,
-      function (error) {
-        console.error(error);
-      }
-    );
-  });
-}
 function init() {
-  // Create the scene
-  scene = new THREE.Scene();
-
-  // Create a camera, which determines what we'll see when we render the scene
   camera = new THREE.PerspectiveCamera(
-    75,
+    60,
     window.innerWidth / window.innerHeight,
     0.1,
-    1000
+    100
   );
-  camera.position.set(0, 1, 3);
+  camera.position.z = 0.01;
 
-  // Create a renderer and add it to our document
-  renderer = new THREE.WebGLRenderer({ antialias: true });
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  document.body.appendChild(renderer.domElement);
+  scene = new THREE.Scene();
 
-  // Add an ambient light
-  const ambientLight = new THREE.AmbientLight(0x404040, 2); // soft white light
-  scene.add(ambientLight);
+  const pointLight1 = new THREE.PointLight(0xffffff, 3, 0, 0);
+  pointLight1.position.set(500, 500, 500);
+  scene.add(pointLight1);
 
-  // Add a directional light
-  const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-  directionalLight.position.set(5, 5, 5);
-  scene.add(directionalLight);
+  const pointLight2 = new THREE.PointLight(0xffffff, 1, 0, 0);
+  pointLight2.position.set(-500, -500, -500);
+  scene.add(pointLight2);
 
-  // Add orbit controls to allow for zooming, panning, and rotating the camera
-  const controls = new OrbitControls(camera, renderer.domElement);
+  video = document.getElementById("video");
 
-  let cdObjectCount = 5;
-  let modelsToLoad = [];
+  const texture = new THREE.VideoTexture(video);
+  texture.colorSpace = THREE.SRGBColorSpace;
 
-  for (let i = 0; i < cdObjectCount; i++) {
-    modelsToLoad.push({
-      path: "public/lowpoly_cd.glb",
-      position: generateRandomPosition(),
-    });
+  const geometry = new THREE.BoxGeometry(5, 5, 5);
+  //   geometry.scale(0.5, 0.5, 0.5);
+  const material = new THREE.MeshBasicMaterial({ map: texture });
+
+  const count = 128;
+  const radius = 32;
+
+  for (let i = 1, l = count; i <= l; i++) {
+    const phi = Math.acos(-1 + (2 * i) / l);
+    const theta = Math.sqrt(l * Math.PI) * phi;
+
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.position.setFromSphericalCoords(radius, phi, theta);
+    mesh.lookAt(camera.position);
+    scene.add(mesh);
   }
 
-  const loader = new GLTFLoader();
+  sphere = new THREE.Mesh(
+    new THREE.SphereGeometry(200, 20, 10),
+    new THREE.MeshPhongMaterial({ flatShading: true })
+  );
+  scene.add(sphere);
 
-  loadModels(loader, modelsToLoad);
+  renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setPixelRatio(window.devicePixelRatio);
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setAnimationLoop(animate);
 
-  // Handle window resize
-  window.addEventListener("resize", onWindowResize, false);
+  //   effect = new AsciiEffect(renderer, " .:-+*=%@#", { invert: true });
+  effect = new AsciiEffect(renderer, " .:-+***====%%%%@@@@####", {
+    invert: true,
+  });
+  effect.setSize(window.innerWidth, window.innerHeight);
+  effect.domElement.style.color = "white";
+  effect.domElement.style.backgroundColor = "black";
+  document.body.appendChild(effect.domElement);
+  document.body.appendChild(renderer.domElement);
+
+  const controls = new OrbitControls(camera, renderer.domElement);
+  controls.enableZoom = false;
+  controls.enablePan = false;
+
+  window.addEventListener("resize", onWindowResize);
+
+  //
+
+  if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+    const constraints = {
+      video: { width: 1280, height: 720, facingMode: "user" },
+    };
+
+    navigator.mediaDevices
+      .getUserMedia(constraints)
+      .then(function (stream) {
+        // apply the stream to the video element used in the texture
+
+        video.srcObject = stream;
+        video.play();
+      })
+      .catch(function (error) {
+        console.error("Unable to access the camera/webcam.", error);
+      });
+  } else {
+    console.error("MediaDevices interface not available.");
+  }
 }
 
 function onWindowResize() {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
+
   renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
 function animate() {
-  requestAnimationFrame(animate);
-
-  // Rotate each model around its pivot
-  models.forEach(({ pivot }) => {
-    const randomRotationDirection = Math.random() < 0.5 ? -1 : 1;
-    pivot.rotationDirection = randomRotationDirection;
-    const randomRotationSpeed = Math.random() < 0.5 ? 0.01 : 0.05;
-    pivot.rotation.y += randomRotationSpeed;
-    pivot.x -= 1;
-  });
-
-  // Render the scene from the perspective of the camera
-  renderer.render(scene, camera);
+  effect.render(scene, camera);
 }
-
-// Initialize the scene and start loading models
-init();
