@@ -81,8 +81,8 @@ function init() {
 
   //stats
 
-  stats = new Stats();
-  document.body.appendChild(stats.dom);
+  //   stats = new Stats();
+  //   document.body.appendChild(stats.dom);
 
   window.addEventListener("resize", onWindowResize);
 }
@@ -96,7 +96,7 @@ function onWindowResize() {
 
 function animate() {
   render();
-  stats.update();
+  //   stats.update();
 }
 
 function render() {
@@ -122,4 +122,14 @@ function render() {
   light4.position.z = Math.sin(time * 0.5) * 30;
 
   renderer.render(scene, camera);
+}
+
+var x = document.getElementById("mumbleworld");
+
+function playAudio() {
+  x.play();
+}
+
+function pauseAudio() {
+  x.pause();
 }

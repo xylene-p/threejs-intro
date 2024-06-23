@@ -1,3 +1,21 @@
+.glow {
+	font-size: 80px;
+	color: #fff;
+	text-align: center;
+	-webkit-animation: glow 1s ease-in-out infinite alternate;
+	-moz-animation: glow 1s ease-in-out infinite alternate;
+	animation: glow 1s ease-in-out infinite alternate;
+  }
+  
+  @-webkit-keyframes glow {
+	from {
+	  text-shadow: 0 0 10px #fff, 0 0 20px #fff, 0 0 30px #e60073, 0 0 40px #e60073, 0 0 50px #e60073, 0 0 60px #e60073, 0 0 70px #e60073;
+	}
+	to {
+	  text-shadow: 0 0 20px #fff, 0 0 30px #40908E, 0 0 40px #40908E, 0 0 50px #40908E, 0 0 60px #40908E, 0 0 70px #40908E, 0 0 80px #40908E;
+	}
+  }
+
 #info {
 	position: absolute;
 	top: 0px;
@@ -11,9 +29,60 @@
 	user-select: none;
 	pointer-events: none;
 	z-index: 1; /* TODO Solve this in HTML */
+	color: white;
+}
+
+.fade-in {
+	background-color: #000000;
+	color: white;
+	height: 100vh; /* For 100% screen height */
+    width:  100vw; 
+    opacity: 0.01;          /* Start completely transparent */
+    transition: opacity 1s ease-in-out; /* Transition property for a smooth fade */
+}
+
+.fade-in:hover { /* or any other trigger, like a class change */
+    opacity: 1;          /* End fully opaque */
+}
+
+.clear-orb-button {
+	position: absolute;
+	top: 100;
+	/* Core Orb Shape */
+	width: 60px;   /* Adjust button size here */
+	height: 60px;
+	border-radius: 50%;
+	background-color: transparent; /* Clear background */
+	border: 2px solid rgba(255, 255, 255, 0.8); /* Semi-transparent white border */
+	cursor: pointer; /* Indicate interactivity */
+  
+	/* Add a subtle glow on hover for effect */
+	transition: box-shadow 0.2s ease;
+  }
+  
+  .clear-orb-button:hover {
+	box-shadow: 0 0 10px rgba(255, 255, 255, 0.5); /* Soft white glow */
+  }
+  
+  /* Optional: Style for icon inside the button */
+  .clear-orb-button i {
+	color: rgba(255, 255, 255, 0.8); /* Light icon color */
+	font-size: 24px; /* Adjust icon size */
+  }
+
+audio {
+	position: fixed; /* Ensures the div stays fixed to the viewport */
+  bottom: 0;       /* Positions it at the bottom */
+  left: 50%;   
+  transform: translateX(-50%); /* Centers it horizontally by shifting it left by half its width */
+  padding: 50px;
+  opacity: 0.09;
+  color: white;
+  background-color: black;
 }
 
 
 body {
 	margin: 0;
+	background-color: black;
 }
