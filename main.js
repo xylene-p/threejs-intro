@@ -1,14 +1,20 @@
 import * as THREE from "three";
 
 import Stats from "three/addons/libs/stats.module.js";
-
 import { OBJLoader } from "three/addons/loaders/OBJLoader.js";
-
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer.js";
+import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
+import { ShaderPass } from "three/examples/jsm/postprocessing/ShaderPass.js";
+import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
+import { BokehPass } from "three/examples/jsm/postprocessing/BokehPass.js";
 
 let camera, scene, renderer, light1, light2, light3, light4, object, stats;
 
 const clock = new THREE.Clock();
+
+let controls, composer;
 
 init();
 
@@ -19,7 +25,7 @@ function init() {
     1,
     1000
   );
-  camera.position.z = 100;
+  camera.position.z = 5;
 
   scene = new THREE.Scene();
 
@@ -38,7 +44,7 @@ function init() {
   //     scene.add(gltf.scene);
   //   });
 
-  const sphereGeo = new THREE.SphereGeometry(10);
+  const sphereGeo = new THREE.SphereGeometry(1);
   const material = new THREE.MeshPhongMaterial({ color: 0xffffff });
   const globe = new THREE.Mesh(sphereGeo, material);
   scene.add(globe);
@@ -79,6 +85,30 @@ function init() {
   renderer.setAnimationLoop(animate);
   document.body.appendChild(renderer.domElement);
 
+  const loader = new GLTFLoader();
+  loader.load("public/night_playground_scan.glb", function (gltf) {
+    // gltf.scene.size = 100;
+    // const material = new THREE.MeshPhongMaterial({ color: 0xffffff });
+    // const playground = new THREE.Mesh(gltf.scene, material);
+    scene.add(gltf.scene);
+  });
+
+  // composer
+  composer = new EffectComposer(renderer);
+  composer.addPass(new RenderPass(scene, camera));
+  composer.addPass(
+    new UnrealBloomPass(
+      new THREE.Vector2(window.innerWidth, window.innerHeight),
+      1.5,
+      0.4,
+      0.85
+    )
+  );
+
+  controls = new OrbitControls(camera, renderer.domElement);
+  camera.position.set(20, 50, 1);
+  controls.update();
+
   //stats
 
   //   stats = new Stats();
@@ -96,6 +126,10 @@ function onWindowResize() {
 
 function animate() {
   render();
+  controls.update();
+  camera.position.y -= 0.05;
+  camera.position.z -= 0.05;
+  camera.position.x -= 0.05;
   //   stats.update();
 }
 
@@ -122,6 +156,7 @@ function render() {
   light4.position.z = Math.sin(time * 0.5) * 30;
 
   renderer.render(scene, camera);
+  composer;
 }
 
 var x = document.getElementById("mumbleworld");
