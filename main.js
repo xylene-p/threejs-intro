@@ -1,103 +1,90 @@
 import * as THREE from "three";
 
-import { AsciiEffect } from "three/addons/effects/AsciiEffect.js";
-import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import Stats from "three/addons/libs/stats.module.js";
 
-let camera, scene, renderer, video, effect;
+import { OBJLoader } from "three/addons/loaders/OBJLoader.js";
 
-let sphere;
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+
+let camera, scene, renderer, light1, light2, light3, light4, object, stats;
+
+const clock = new THREE.Clock();
 
 init();
 
 function init() {
   camera = new THREE.PerspectiveCamera(
-    60,
+    50,
     window.innerWidth / window.innerHeight,
-    0.1,
-    100
+    1,
+    1000
   );
-  camera.position.z = 0.01;
+  camera.position.z = 100;
 
   scene = new THREE.Scene();
 
-  const pointLight1 = new THREE.PointLight(0xffffff, 3, 0, 0);
-  pointLight1.position.set(500, 500, 500);
-  scene.add(pointLight1);
+  //model
 
-  const pointLight2 = new THREE.PointLight(0xffffff, 1, 0, 0);
-  pointLight2.position.set(-500, -500, -500);
-  scene.add(pointLight2);
+  //   const loader = new OBJLoader();
+  //   loader.load("public/WaltHead.obj", function (obj) {
+  //     object = obj;
+  //     object.scale.multiplyScalar(0.8);
+  //     object.position.y = -30;
+  //     scene.add(object);
+  //   });
 
-  video = document.getElementById("video");
+  //   const loader = new GLTFLoader();
+  //   loader.load("public/lowpoly_cd.glb", function (gltf) {
+  //     scene.add(gltf.scene);
+  //   });
 
-  const texture = new THREE.VideoTexture(video);
-  texture.colorSpace = THREE.SRGBColorSpace;
+  const sphereGeo = new THREE.SphereGeometry(10);
+  const material = new THREE.MeshPhongMaterial({ color: 0xffffff });
+  const globe = new THREE.Mesh(sphereGeo, material);
+  scene.add(globe);
 
-  const geometry = new THREE.BoxGeometry(5, 5, 5);
-  //   geometry.scale(0.5, 0.5, 0.5);
-  const material = new THREE.MeshBasicMaterial({ map: texture });
+  const sphere = new THREE.SphereGeometry(0.5, 16, 8);
 
-  const count = 128;
-  const radius = 32;
+  //lights
 
-  for (let i = 1, l = count; i <= l; i++) {
-    const phi = Math.acos(-1 + (2 * i) / l);
-    const theta = Math.sqrt(l * Math.PI) * phi;
-
-    const mesh = new THREE.Mesh(geometry, material);
-    mesh.position.setFromSphericalCoords(radius, phi, theta);
-    mesh.lookAt(camera.position);
-    scene.add(mesh);
-  }
-
-  sphere = new THREE.Mesh(
-    new THREE.SphereGeometry(200, 20, 10),
-    new THREE.MeshPhongMaterial({ flatShading: true })
+  light1 = new THREE.PointLight(0xff0040, 400);
+  light1.add(
+    new THREE.Mesh(sphere, new THREE.MeshBasicMaterial({ color: 0xff0040 }))
   );
-  scene.add(sphere);
+  scene.add(light1);
+
+  light2 = new THREE.PointLight(0x0040ff, 400);
+  light2.add(
+    new THREE.Mesh(sphere, new THREE.MeshBasicMaterial({ color: 0x0040ff }))
+  );
+  scene.add(light2);
+
+  light3 = new THREE.PointLight(0x80ff80, 400);
+  light3.add(
+    new THREE.Mesh(sphere, new THREE.MeshBasicMaterial({ color: 0x80ff80 }))
+  );
+  scene.add(light3);
+
+  light4 = new THREE.PointLight(0xffaa00, 400);
+  light4.add(
+    new THREE.Mesh(sphere, new THREE.MeshBasicMaterial({ color: 0xffaa00 }))
+  );
+  scene.add(light4);
+
+  //renderer
 
   renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setPixelRatio(window.devicePixelRatio);
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setAnimationLoop(animate);
-
-  //   effect = new AsciiEffect(renderer, " .:-+*=%@#", { invert: true });
-  effect = new AsciiEffect(renderer, " .:-+***====%%%%@@@@####", {
-    invert: true,
-  });
-  effect.setSize(window.innerWidth, window.innerHeight);
-  effect.domElement.style.color = "white";
-  effect.domElement.style.backgroundColor = "black";
-  document.body.appendChild(effect.domElement);
   document.body.appendChild(renderer.domElement);
 
-  const controls = new OrbitControls(camera, renderer.domElement);
-  controls.enableZoom = false;
-  controls.enablePan = false;
+  //stats
+
+  stats = new Stats();
+  document.body.appendChild(stats.dom);
 
   window.addEventListener("resize", onWindowResize);
-
-  //
-
-  if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-    const constraints = {
-      video: { width: 1280, height: 720, facingMode: "user" },
-    };
-
-    navigator.mediaDevices
-      .getUserMedia(constraints)
-      .then(function (stream) {
-        // apply the stream to the video element used in the texture
-
-        video.srcObject = stream;
-        video.play();
-      })
-      .catch(function (error) {
-        console.error("Unable to access the camera/webcam.", error);
-      });
-  } else {
-    console.error("MediaDevices interface not available.");
-  }
 }
 
 function onWindowResize() {
@@ -108,5 +95,31 @@ function onWindowResize() {
 }
 
 function animate() {
-  effect.render(scene, camera);
+  render();
+  stats.update();
+}
+
+function render() {
+  const time = Date.now() * 0.0005;
+  const delta = clock.getDelta();
+
+  if (object) object.rotation.y -= 0.5 * delta;
+
+  light1.position.x = Math.sin(time * 0.7) * 30;
+  light1.position.y = Math.cos(time * 0.5) * 40;
+  light1.position.z = Math.cos(time * 0.3) * 30;
+
+  light2.position.x = Math.cos(time * 0.3) * 30;
+  light2.position.y = Math.sin(time * 0.5) * 40;
+  light2.position.z = Math.sin(time * 0.7) * 30;
+
+  light3.position.x = Math.sin(time * 0.7) * 30;
+  light3.position.y = Math.cos(time * 0.3) * 40;
+  light3.position.z = Math.sin(time * 0.5) * 30;
+
+  light4.position.x = Math.sin(time * 0.3) * 30;
+  light4.position.y = Math.cos(time * 0.7) * 40;
+  light4.position.z = Math.sin(time * 0.5) * 30;
+
+  renderer.render(scene, camera);
 }
