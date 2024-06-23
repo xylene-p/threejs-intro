@@ -86,7 +86,7 @@ function init() {
   document.body.appendChild(renderer.domElement);
 
   const loader = new GLTFLoader();
-  loader.load("public/night_playground_scan.glb", function (gltf) {
+  loader.load("./public/night_playground_scan.glb", function (gltf) {
     // gltf.scene.size = 100;
     // const material = new THREE.MeshPhongMaterial({ color: 0xffffff });
     // const playground = new THREE.Mesh(gltf.scene, material);
