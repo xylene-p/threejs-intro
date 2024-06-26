@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "@tweenjs/tween.js": "^23.1.2",
     "gsap": "^3.12.5",
     "postprocessing": "^6.35.5",
     "three": "^0.165.0"

@@ -299,6 +299,7 @@ import * as THREE from "three";
 import { WebGLRenderer } from "three";
 import * as ObjectCloud from "./objects/ObjectCloud";
 import { AmbientLight, DirectionalLight } from "three";
+import TWEEN from "@tweenjs/tween.js";
 const clock = new THREE.Clock();
 
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
@@ -339,7 +340,7 @@ scene.add(cube);
 // controls
 
 let controls = new OrbitControls(camera, renderer.domElement);
-camera.position.set(20, 50, 1);
+camera.position.set(38, -31, -36);
 controls.update();
 // controls.addEventListener("change", (event) => {
 //   console.log(controls.object.position);
@@ -424,6 +425,31 @@ requestAnimationFrame(function render() {
   composer.render();
 });
 
+const raycaster = new THREE.Raycaster();
+const pointer = new THREE.Vector2();
+
+function onPointerDown(event) {
+  pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
+  pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
+  raycaster.setFromCamera(pointer, camera);
+  const intersects = raycaster.intersectObject(cube);
+
+  if (intersects.length > 0) {
+    // change camera position
+    console.log("change camera position");
+    const newPosition = new THREE.Vector3(-42, 44, 4);
+    new TWEEN.Tween(camera.position)
+      .to(newPosition, 1000) // 1000ms duration
+      .easing(TWEEN.Easing.Quadratic.InOut) // Easing function
+      .start();
+  }
+}
+
+window.addEventListener("pointerdown", onPointerDown);
+
+const radius = 5;
+let angle = 0;
+
 function animate() {
   //   time = Date.now() * 0.0005;
   //   const t = clock.getDelta() + 0.5;
@@ -440,6 +466,12 @@ function animate() {
   const g = Math.sin(time * 0.3) * 0.5 + 0.5;
   const b = Math.sin(time * 1.3) * 0.5 + 0.5;
   mainLight.color.setRGB(r, g, b);
+
+  // Update the camera's position
+  //   console.log("changing camera pos");
+  //   angle += 0.01; // Adjust this for the speed of rotation
+  //   camera.position.x = radius * Math.cos(angle);
+  //   camera.position.z = radius * Math.sin(angle);
   //   console.log(changing ligh)
   //   cosmos.rotation.x = 2 * t;
   //   cosmos.rotation.y = -2 * t;
@@ -448,6 +480,10 @@ function animate() {
   //   camera.position.x -= 0.5;
   //   camera.position.y += 0.5;
   //   camera.position.z += 0.5;
+
+  //   console.log(camera.position.x, camera.position.y, camera.position.z);
+
+  TWEEN.update();
 
   renderer.render(scene, camera);
 }
