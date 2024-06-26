@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import gsap from "gsap";
 
 import Stats from "three/addons/libs/stats.module.js";
 import { OBJLoader } from "three/addons/loaders/OBJLoader.js";
@@ -16,7 +17,41 @@ const clock = new THREE.Clock();
 
 let controls, composer;
 
+let sceneDesc;
+
+let newAudio;
+
 init();
+
+function onMouseClick(event) {
+  const raycaster = new THREE.Raycaster();
+  const mouse = new THREE.Vector2();
+  mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+  mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+  raycaster.setFromCamera(mouse, camera);
+  const intersects = raycaster.intersectObjects(scene.children, true);
+
+  if (intersects.length > 0) {
+    const clickedObject = intersects[0].object;
+
+    // Calculate bounding box and center
+    const box = new THREE.Box3().setFromObject(clickedObject);
+    const center = box.getCenter(new THREE.Vector3());
+
+    sceneDesc = "scene2";
+    // Smoothly move camera using GSAP (or another animation library)
+    gsap.to(camera.position, {
+      duration: 1, // Animation duration in seconds
+      x: center.x,
+      y: center.y,
+      z: center.z + 5, // Adjust the distance from the object
+      onUpdate: () => {
+        camera.lookAt(center); // Keep camera focused on the center
+      },
+    });
+  }
+}
 
 function init() {
   camera = new THREE.PerspectiveCamera(
@@ -27,7 +62,19 @@ function init() {
   );
   camera.position.z = 5;
 
+  sceneDesc = "scene1";
+
   scene = new THREE.Scene();
+
+  // audio
+
+  newAudio = document.createElement("audio");
+  newAudio.src = "./mumbleworld00.flac";
+  newAudio.controls = true;
+  newAudio.id = "mumbleworld";
+  newAudio.autoplay = true;
+
+  document.body.appendChild(newAudio);
 
   //model
 
@@ -43,6 +90,8 @@ function init() {
   //   loader.load("public/lowpoly_cd.glb", function (gltf) {
   //     scene.add(gltf.scene);
   //   });
+
+  window.addEventListener("click", onMouseClick, false);
 
   const sphereGeo = new THREE.SphereGeometry(1);
   const material = new THREE.MeshPhongMaterial({ color: 0xffffff });
@@ -117,6 +166,52 @@ function init() {
   window.addEventListener("resize", onWindowResize);
 }
 
+let cube2, scene2, camera2, renderer2;
+
+function initScene2() {
+  console.log("init scene2");
+
+  const mumble = document.getElementById("mumbleworld");
+  if (mumble) {
+    mumble.pause();
+    mumble.parentElement.removeChild(mumble);
+  }
+
+  const audio = document.createElement("audio");
+  audio.src = "./useful.m4a";
+
+  // (Optional) Add other attributes:
+  audio.controls = true; // Show browser controls
+  audio.autoplay = true; // Start playing automatically
+
+  document.body.appendChild(audio);
+  //   const mumbleAudio = document.getElementById("mumbleworld00");
+  //   mumbleAudio.pause();
+  //   mumbleAudio.parentNode.removeChild(mumbleAudio);
+  //   console.log("removed audio element");
+  //   scene2 = new THREE.Scene();
+  //   camera2 = new THREE.PerspectiveCamera(
+  //     75,
+  //     window.innerWidth / window.innerHeight,
+  //     0.1,
+  //     1000
+  //   );
+
+  //   renderer2 = new THREE.WebGLRenderer();
+  //   renderer2.setSize(window.innerWidth, window.innerHeight);
+  //   renderer2.setAnimationLoop(animate2);
+  //   console.log("removing child");
+  //   document.body.removeChild(renderer.domElement);
+  //   document.body.appendChild(renderer2.domElement);
+
+  //   const geometry = new THREE.BoxGeometry(1, 1, 1);
+  //   const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+  //   cube2 = new THREE.Mesh(geometry, material);
+  //   scene2.add(cube2);
+
+  //   camera.position.z = 5;
+}
+
 function onWindowResize() {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
@@ -124,12 +219,33 @@ function onWindowResize() {
   renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
+function animate2() {
+  cube2.rotation.x += 0.01;
+  cube2.rotation.y += 0.01;
+
+  renderer.render(scene2, camera2);
+}
+
 function animate() {
   render();
   controls.update();
-  camera.position.y -= 0.05;
-  camera.position.z -= 0.05;
-  camera.position.x -= 0.05;
+  if (sceneDesc == "scene1") {
+    camera.position.y -= 0.05;
+    camera.position.z -= 0.05;
+    camera.position.x -= 0.05;
+  } else if (sceneDesc == "scene2") {
+    camera.position.z -= 0.01;
+    // console.log(camera.position.z);
+    if (sceneDesc == "scene2" && camera.position.z <= 3) {
+      sceneDesc = "scene3";
+      initScene2();
+      camera.position.z = 0;
+    }
+  } else {
+    // console.log("scene3");
+    camera.position.z = 0;
+  }
+
   //   stats.update();
 }
 
@@ -157,14 +273,4 @@ function render() {
 
   renderer.render(scene, camera);
   composer;
-}
-
-var x = document.getElementById("mumbleworld");
-
-function playAudio() {
-  x.play();
-}
-
-function pauseAudio() {
-  x.pause();
 }
