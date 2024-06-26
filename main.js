@@ -410,6 +410,15 @@ camera.position.x = 38;
 camera.position.y = -33;
 camera.position.z = -35;
 
+const audio = document.createElement("audio");
+audio.src = "./useful.m4a";
+
+// (Optional) Add other attributes:
+audio.controls = true; // Show browser controls
+audio.autoplay = true; // Start playing automatically
+
+document.body.appendChild(audio);
+
 requestAnimationFrame(function render() {
   requestAnimationFrame(render);
   composer.render();
