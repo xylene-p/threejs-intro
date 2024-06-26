@@ -296,8 +296,23 @@
 // }
 
 import * as THREE from "three";
+import { WebGLRenderer } from "three";
+import * as ObjectCloud from "./objects/ObjectCloud";
+import { AmbientLight, DirectionalLight } from "three";
+const clock = new THREE.Clock();
+
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+
+import {
+  BloomEffect,
+  EffectComposer,
+  EffectPass,
+  RenderPass,
+} from "postprocessing";
 
 const scene = new THREE.Scene();
+const texture = new THREE.TextureLoader().load("textures/clouds.jpg");
+scene.background = texture;
 const camera = new THREE.PerspectiveCamera(
   75,
   window.innerWidth / window.innerHeight,
@@ -316,15 +331,114 @@ renderer.setAnimationLoop(animate);
 document.body.appendChild(renderer.domElement);
 
 const geometry = new THREE.BoxGeometry(1, 1, 1);
-const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+const material = new THREE.MeshBasicMaterial({ color: 0x00fff0 });
 const cube = new THREE.Mesh(geometry, material);
+cube.position.y = 1;
 scene.add(cube);
 
-camera.position.z = 5;
+// controls
+
+let controls = new OrbitControls(camera, renderer.domElement);
+camera.position.set(20, 50, 1);
+controls.update();
+// controls.addEventListener("change", (event) => {
+//   console.log(controls.object.position);
+// });
+
+// bloom effect
+
+const composer = new EffectComposer(renderer);
+composer.addPass(new RenderPass(scene, camera));
+composer.addPass(new EffectPass(camera, new BloomEffect()));
+
+// lights
+
+const ambientLight = new AmbientLight(0xffa500);
+const mainLight = new DirectionalLight(0xffffff, 3);
+mainLight.position.set(20, -20, 1);
+
+scene.add(ambientLight, mainLight);
+
+const secondaryLight = mainLight.clone();
+secondaryLight.position.set(20, 1, -20);
+scene.add(ambientLight, secondaryLight);
+
+const tertiaryLight = mainLight.clone();
+tertiaryLight.position.set(-20, 1, 20);
+scene.add(ambientLight, tertiaryLight);
+
+// const cloud = ObjectCloud.create();
+// scene.add(cloud);
+
+const platformGeometry = new THREE.PlaneGeometry(5, 5); // Adjust size as needed
+const platformMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff }); // White platform
+const platform = new THREE.Mesh(platformGeometry, platformMaterial);
+scene.add(platform);
+platform.rotation.x = -Math.PI / 2; // Rotate to be horizontal
+
+const orangeMaterial = new THREE.MeshStandardMaterial({
+  color: "orange",
+  flatShading: true,
+  side: THREE.BackSide,
+  metalness: 0.8,
+  roughness: 0.2,
+});
+
+const navyMaterial = new THREE.MeshStandardMaterial({
+  color: "navy",
+  flatShading: true,
+  side: THREE.BackSide,
+  metalness: 0.8,
+  roughness: 0.2,
+});
+
+var cosmos = new THREE.Mesh(new THREE.IcosahedronGeometry(30, 5), navyMaterial);
+scene.add(cosmos);
+
+var cosmos2 = new THREE.Mesh(
+  new THREE.IcosahedronGeometry(30, 5),
+  navyMaterial
+);
+cosmos2.rotation.y = 0.1;
+scene.add(cosmos2);
+
+let cosmos3 = cosmos.clone();
+cosmos3.rotation.y = -0.1;
+scene.add(cosmos3);
+
+camera.position.x = 38;
+camera.position.y = -33;
+camera.position.z = -35;
+
+requestAnimationFrame(function render() {
+  requestAnimationFrame(render);
+  composer.render();
+});
 
 function animate() {
+  //   time = Date.now() * 0.0005;
+  //   const t = clock.getDelta() + 0.5;
   cube.rotation.x += 0.01;
   cube.rotation.y += 0.01;
+  cosmos.rotation.x += 0.005;
+  cosmos.rotation.y -= 0.005;
+  cosmos3.rotation.x += 0.01;
+  cosmos3.rotation.y -= 0.01;
+  const time = Date.now() * 0.0005; // Time factor for smooth animation
+
+  // Example 1: Simple cycling through RGB colors
+  const r = Math.sin(time * 0.7) * 0.5 + 0.5;
+  const g = Math.sin(time * 0.3) * 0.5 + 0.5;
+  const b = Math.sin(time * 1.3) * 0.5 + 0.5;
+  mainLight.color.setRGB(r, g, b);
+  //   console.log(changing ligh)
+  //   cosmos.rotation.x = 2 * t;
+  //   cosmos.rotation.y = -2 * t;
+  //   cosmos2.rotation.x = -1.5 * t;
+  //   cosmos2.rotation.y = 1.5 * t;
+  //   camera.position.x -= 0.5;
+  //   camera.position.y += 0.5;
+  //   camera.position.z += 0.5;
 
   renderer.render(scene, camera);
 }
