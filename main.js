@@ -177,6 +177,9 @@ function initScene2() {
     mumble.parentElement.removeChild(mumble);
   }
 
+  const newText = document.getElementById("info");
+  newText.textContent = "...and you're in a new place...";
+
   const audio = document.createElement("audio");
   audio.src = "./useful.m4a";
 
