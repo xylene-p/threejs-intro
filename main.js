@@ -313,8 +313,6 @@ import {
 } from "postprocessing";
 
 const scene = new THREE.Scene();
-const texture = new THREE.TextureLoader().load("./clouds.jpg");
-scene.background = texture;
 const camera = new THREE.PerspectiveCamera(
   75,
   window.innerWidth / window.innerHeight,
@@ -452,6 +450,11 @@ function loadModel(loader, modelPath, position = new THREE.Vector3(0, 0, 0)) {
   });
 }
 
+function loadScene2() {
+  const texture = new THREE.TextureLoader().load("./WMAP_2012.png");
+  scene.background = texture;
+}
+
 function onPointerDown(event) {
   pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
   pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
@@ -460,8 +463,9 @@ function onPointerDown(event) {
 
   if (intersects.length > 0) {
     // change camera position
-    console.log("change camera position");
+    // console.log("change camera position");
     // const newPosition = new THREE.Vector3(-42, 44, 4);
+    loadScene2();
     const newPosition = SCENE2;
     const loadedModelPromise = loadModel(
       loader,
