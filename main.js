@@ -419,7 +419,7 @@ const loader = new GLTFLoader();
 
 // (Optional) Add other attributes:
 audio.controls = true; // Show browser controls
-audio.autoplay = true; // Start playing automatically
+audio.autoplay = false; // Start playing automatically
 
 document.body.appendChild(audio);
 
@@ -434,19 +434,22 @@ const pointer = new THREE.Vector2();
 const SCENE2 = new THREE.Vector3(50, 50, 50);
 
 function loadModel(loader, modelPath, position = new THREE.Vector3(0, 0, 0)) {
-  loader.load(
-    modelPath,
-    function (gltf) {
-      gltf.scene.position.copy(position);
-      camera.lookAt(position);
-      controls.target.set(position);
-      scene.add(gltf.scene);
-    },
-    undefined,
-    function (error) {
-      console.error(error);
-    }
-  );
+  return new Promise((resolve, reject) => {
+    loader.load(
+      modelPath,
+      function (gltf) {
+        gltf.scene.position.copy(position);
+        // controls.target.set(position);
+        scene.add(gltf.scene);
+        resolve(gltf); // Resolve the promise with the loaded gltf object
+      },
+      undefined,
+      function (error) {
+        console.error(error);
+        reject(error); // Reject the promise on error
+      }
+    );
+  });
 }
 
 function onPointerDown(event) {
@@ -460,7 +463,29 @@ function onPointerDown(event) {
     console.log("change camera position");
     // const newPosition = new THREE.Vector3(-42, 44, 4);
     const newPosition = SCENE2;
-    loadModel(loader, "night_playground_scan.glb", SCENE2);
+    const loadedModelPromise = loadModel(
+      loader,
+      "night_playground_scan.glb",
+      SCENE2
+    );
+    loadedModelPromise.then((gltf) => {
+      // Use the loaded gltf object here
+      // camera.lookAt(gltf.position);
+      // You can also store it in a variable
+      const playground = gltf;
+      const targetPosition = new THREE.Vector3();
+      playground.getWorldPosition(targetPosition);
+      const desiredXDistance = 50; // Change this to your desired distance
+
+      const cameraPosition = new THREE.Vector3(
+        targetPosition.x + desiredXDistance,
+        targetPosition.y + desiredXDistance,
+        targetPosition.z
+      );
+      camera.position.copy(cameraPosition);
+      camera.lookAt(camera.lookAt(targetPosition));
+      controls.target.copy(targetPosition);
+    });
     new TWEEN.Tween(camera.position)
       .to(newPosition, 1000) // 1000ms duration
       .easing(TWEEN.Easing.Quadratic.InOut) // Easing function
