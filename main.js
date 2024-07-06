@@ -299,6 +299,7 @@ import * as THREE from "three";
 import { WebGLRenderer } from "three";
 import * as ObjectCloud from "./objects/ObjectCloud";
 import { AmbientLight, DirectionalLight } from "three";
+import { GLTFLoader } from "three/examples/jsm/Addons.js";
 import TWEEN from "@tweenjs/tween.js";
 const clock = new THREE.Clock();
 
@@ -414,6 +415,8 @@ camera.position.z = -35;
 const audio = document.createElement("audio");
 audio.src = "./useful.m4a";
 
+const loader = new GLTFLoader();
+
 // (Optional) Add other attributes:
 audio.controls = true; // Show browser controls
 audio.autoplay = true; // Start playing automatically
@@ -428,6 +431,24 @@ requestAnimationFrame(function render() {
 const raycaster = new THREE.Raycaster();
 const pointer = new THREE.Vector2();
 
+const SCENE2 = new THREE.Vector3(50, 50, 50);
+
+function loadModel(loader, modelPath, position = new THREE.Vector3(0, 0, 0)) {
+  loader.load(
+    modelPath,
+    function (gltf) {
+      gltf.scene.position.copy(position);
+      // camera.lookAt(position);
+      controls.target.set(position);
+      scene.add(gltf.scene);
+    },
+    undefined,
+    function (error) {
+      console.error(error);
+    }
+  );
+}
+
 function onPointerDown(event) {
   pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
   pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
@@ -437,7 +458,9 @@ function onPointerDown(event) {
   if (intersects.length > 0) {
     // change camera position
     console.log("change camera position");
-    const newPosition = new THREE.Vector3(-42, 44, 4);
+    // const newPosition = new THREE.Vector3(-42, 44, 4);
+    const newPosition = SCENE2;
+    loadModel(loader, "night_playground_scan.glb", SCENE2);
     new TWEEN.Tween(camera.position)
       .to(newPosition, 1000) // 1000ms duration
       .easing(TWEEN.Easing.Quadratic.InOut) // Easing function
