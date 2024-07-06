@@ -313,7 +313,7 @@ import {
 } from "postprocessing";
 
 const scene = new THREE.Scene();
-const texture = new THREE.TextureLoader().load("textures/clouds.jpg");
+const texture = new THREE.TextureLoader().load("./clouds.jpg");
 scene.background = texture;
 const camera = new THREE.PerspectiveCamera(
   75,
@@ -438,7 +438,7 @@ function loadModel(loader, modelPath, position = new THREE.Vector3(0, 0, 0)) {
     modelPath,
     function (gltf) {
       gltf.scene.position.copy(position);
-      // camera.lookAt(position);
+      camera.lookAt(position);
       controls.target.set(position);
       scene.add(gltf.scene);
     },
